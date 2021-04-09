@@ -1,11 +1,16 @@
 package com.dmgpersonal.notes;
 
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
+import android.text.NoCopySpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +20,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 public class NotesListFragment extends Fragment {
+    private boolean isLandscape;
 
     public static NotesListFragment newInstance(String param1, String param2) {
         NotesListFragment fragment = new NotesListFragment();
@@ -27,14 +33,44 @@ public class NotesListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        if(isLandscape) {
+            showLandNotesBody(null);
+        }
         initView(view);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_notes_list, container, false);
+    }
+
+    private void showNotesBody(Notes note) {
+        if (isLandscape) {
+            showLandNotesBody(note);
+        } else {
+            showPortNotesBody(note);
+        }
+    }
+
+    private void showLandNotesBody(Notes note) {
+        if(note == null) {
+            return;
+        }
+        NoteBodyFragment detail = NoteBodyFragment.newInstance(note);
+        FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.notebody_land, detail);
+        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        fragmentTransaction.commit();
+    }
+
+    private void showPortNotesBody(Notes note) {
+        Intent intent = new Intent();
+        intent.setClass(getActivity(), NoteBodyActivity.class);
+        intent.putExtra(NoteBodyFragment.ARG_NOTE, note);
+        startActivity(intent);
     }
 
     private void initView(View view) {
@@ -42,12 +78,17 @@ public class NotesListFragment extends Fragment {
         String[] notesStringArray = getResources().getStringArray(R.array.notes);
         ArrayList<Notes> notes = new ArrayList<>();
         int idx = 0;
-        for(String el: notesStringArray) {
+        for (String el : notesStringArray) {
             TextView tv = new TextView(getContext());
             notes.add(new Notes(el, el));
-            tv.setText(notes.get(idx++).getTitle());
+            tv.setText(notes.get(idx).getTitle());
             tv.setTextSize(30);
             linearLayout.addView(tv);
+
+            final int finalIdx = idx++;
+            tv.setOnClickListener(v -> {
+                showNotesBody(notes.get(finalIdx));
+            });
         }
     }
 }
