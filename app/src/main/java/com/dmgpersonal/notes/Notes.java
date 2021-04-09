@@ -1,9 +1,13 @@
 package com.dmgpersonal.notes;
 
 import android.graphics.Color;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.Date;
 
-public class Notes {
+public class Notes implements Parcelable {
+
     enum Status {
         New,        // Новая заметка
         Read,       // Прочитано
@@ -13,9 +17,11 @@ public class Notes {
         public int value() {
             return 1 << ordinal();
         }
+
         // Uses Status status = Status.New.value() | Status.Important.value()
         // if((status && Status.Important.value()) == Status.Important.value()) {true}
     }
+
     private String title;
     private String body;
     private Status status;
@@ -72,5 +78,35 @@ public class Notes {
 
     public String getDate() {
         return date;
+    }
+
+    protected Notes(Parcel in) {
+        title = in.readString();
+        body = in.readString();
+        date = in.readString();
+    }
+
+    public static final Creator<Notes> CREATOR = new Creator<Notes>() {
+        @Override
+        public Notes createFromParcel(Parcel in) {
+            return new Notes(in);
+        }
+
+        @Override
+        public Notes[] newArray(int size) {
+            return new Notes[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(body);
+        dest.writeString(date);
     }
 }
